@@ -4,7 +4,9 @@
 
 # 忽略特定的 Python 文件
 pages/membership_share.py
-pages/debug_response.json
-pages/gold_cases.json
-pages/user_config.json
-pages/.token_cache.json
+
+# 忽略根目录下的配置文件
+debug_response.json
+gold_cases.json
+user_config.json
+.token_cache.json
