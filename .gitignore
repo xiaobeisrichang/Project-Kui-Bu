@@ -1,0 +1,9 @@
+# 忽略特定的文件夹（包含其下所有内容）
+01_Knowledge_Base/
+02_Drafts/
+
+# 忽略特定的 Python 文件
+pages/membership_share.py
+pages/debug_response.json
+pages/gold_cases.json
+pages/user_config.json
