@@ -5,17 +5,15 @@ import datetime
 import re
 import json
 
-# --- 1. 配置中心 ---
-STORY_PATH = "01_Knowledge_Base"
-GOLD_CASES_FILE = "gold_cases.json" 
-OLLAMA_URL = "http://127.0.0.1:11434/api/chat" 
-MODEL_NAME = "qwen2.5:7b" 
+# niuma_web.py 头部
+from config import STORY_PATH, GOLD_CASES_FILE, OLLAMA_URL, MODEL_NAME, TEAM_MEMBERS, BUSINESS_MODULES
 
 
 # --- 2. 初始化 ---
 if not os.path.exists(STORY_PATH): os.makedirs(STORY_PATH)
 for folder in BUSINESS_MODULES.keys(): os.makedirs(os.path.join(STORY_PATH, folder), exist_ok=True)
 if "current_user" not in st.session_state: st.session_state.current_user = TEAM_MEMBERS[0]
+
 
 # --- 3. 工具函数 ---
 def save_gold_case(query, answer):
