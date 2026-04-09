@@ -4,6 +4,7 @@ import os
 import datetime
 import re
 import json
+import time  # 引入时间模块
 
 # niuma_web.py 头部
 from config import STORY_PATH, GOLD_CASES_FILE, OLLAMA_URL, MODEL_NAME, TEAM_MEMBERS, BUSINESS_MODULES
@@ -132,9 +133,13 @@ with tabs[0]:
 - 隐藏：严禁输出路径、文件名、录入人信息。
 
 【4. 格式死令（严格按照文档记录）】
-- 必须使用标准 Markdown 列表（-）。
-- 核心逻辑词必须**加粗**。
-- 脱敏星号必须包裹在反引号内，如 `441****2727`。"""
+- **强制三级嵌套布局**：
+  - 第一层（项目）：`- 业务逻辑词：`
+  - 第二层（大项）：`  - 1. [大项描述]`（前面空 2 个空格）
+  - 第三层（细节）：`    - a) [子项细节]`（前面再多空 2 个空格，形成明显阶梯）
+- **禁止堆砌**：子项细节必须换行，严禁紧跟在大项后面。
+- **视觉增强**：核心逻辑词必须**加粗**。
+- **脱敏处理**：脱敏星号必须包裹在反引号内，如 `441****2727`。"""
 
                         ans = get_qwen_chat_response([
                             {"role": "system", "content": sys_msg}, 
@@ -157,7 +162,7 @@ with tabs[0]:
         st.write("---")
         st.markdown(st.session_state.last_ans)
         
-        c1, c2 = st.columns([1, 8])
+        c1, c2 = st.columns([1, 1])
         # ✅ 点完准确，案例录入，且因为有 session_state，答案不会消失
         if c1.button("👍 准确"):
             save_gold_case(st.session_state.last_query, st.session_state.last_ans)
@@ -178,9 +183,15 @@ with tabs[1]:
     body = st.text_area("内容描述", value="### 📢 [通用规则]\n-业务逻辑： \n-使用范围： \n\n---\n### 🔒 [底层细节/内部逻辑]\n-核心逻辑：\n-技术配置： \n--- ### 🏷️ 搜索关键词关键词：\n---", height=350, key="reg_body")
     if st.button("确认存入", type="primary"):
         if title:
-            path = os.path.join(STORY_PATH, m1, f"{title}_{datetime.datetime.now().strftime('%m%d')}.md")
+            # 🚀 新增：清洗标题，防止斜杠导致路径错误
+            safe_title = title.replace("/", "_").replace("\\", "_")
+
+            path = os.path.join(STORY_PATH, m1, f"{safe_title}_{datetime.datetime.now().strftime('%m%d')}.md")
             with open(path, "w", encoding="utf-8") as f: f.write(f"# {title}\n- **录入**：{st.session_state.current_user}\n---\n{body}")
-            st.success("✅ 存入成功！"); st.rerun()
+            # ✅ 修复方案：先提示，再等待 0.5 秒，最后刷新
+            st.toast(f"🎯 规则《{title}》已成功存入 {m1}！", icon="✅")
+            time.sleep(0.5) 
+            st.rerun()
 
 # --- Tab 2: 知识库管理 ---
 with tabs[2]:
@@ -191,11 +202,19 @@ with tabs[2]:
             if f.endswith(".md"): all_fs.append(os.path.join(r, f))
     if all_fs:
         sf = st.selectbox("选择要修改的文档：", all_fs)
-        with open(sf, 'r', encoding='utf-8') as f: doc_c = f.read()
-        new_c = st.text_area("内容编辑：", value=doc_c, height=450, key="edit_area")
+        with open(sf, 'r', encoding='utf-8') as f: 
+            doc_c = f.read()
+            
+        # 🚀 核心修复：把 key 设为动态，绑定文件名 sf
+        # 这样切换文件时，Streamlit 会强制重绘这个文本框
+        new_c = st.text_area("内容编辑：", value=doc_c, height=450, key=f"edit_{sf}")
+        
         if st.button("💾 保存修改"):
-            with open(sf, 'w', encoding='utf-8') as f: f.write(new_c)
+            with open(sf, 'w', encoding='utf-8') as f: 
+                f.write(new_c)
             st.success("✅ 更新成功！")
+            # 存完顺手刷一下，让展示同步
+            st.rerun()
     else: st.info("知识库暂无内容")
 
 # --- Tab 3: 案例库管理 ---
